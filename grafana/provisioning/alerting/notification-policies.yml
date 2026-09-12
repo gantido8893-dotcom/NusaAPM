@@ -1,0 +1,45 @@
+# Grafana unified-alerting notification policy provisioning — Personal AI APM System
+#
+# Requirements traceability:
+#   5.1 — Routes Red_Band alerts to the free-webhook contact point so a
+#         notification is sent within 60s of the crossing evaluation.
+#   5.5 — While a metric stays continuously in its Red_Band, no more than one
+#         notification is sent per configurable re-notification interval, where
+#         the interval is a configurable value between 1 and 1440 minutes. This
+#         is Grafana's `repeat_interval`, supplied via the
+#         ${APM_ALERT_REPEAT_INTERVAL} env var (default 60m — inside 1m..1440m).
+#
+# The policy tree has a single default route (single-user scope, Requirement 14):
+# every alert produced by the APM rule group matches and is delivered to the
+# apm-free-webhook contact point. `group_by`, `group_wait`, and `group_interval`
+# keep repeat notifications bounded together with `repeat_interval`.
+#
+# Zero-cost note (Requirement 13): routing only targets the free webhook contact
+# point; no paid receiver is referenced.
+
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: apm-free-webhook
+    # Group Red_Band alerts by the metric so each metric notifies independently.
+    group_by:
+      - metric
+    # Wait briefly to batch an initial group of alerts.
+    group_wait: 30s
+    # Minimum spacing before sending an updated notification for an existing group.
+    group_interval: 5m
+    # Re-notification interval (Requirement 5.5): while a metric remains in its
+    # Red_Band, re-notify at most once per this interval. Configurable via env
+    # var and constrained to the 1m..1440m range; default 60m.
+    repeat_interval: ${APM_ALERT_REPEAT_INTERVAL}
+    routes:
+      # Explicit route for Red_Band (critical) alerts from the APM rule group.
+      - receiver: apm-free-webhook
+        object_matchers:
+          - ["band", "=", "red"]
+        group_by:
+          - metric
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: ${APM_ALERT_REPEAT_INTERVAL}

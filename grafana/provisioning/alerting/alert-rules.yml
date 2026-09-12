@@ -1,0 +1,110 @@
+# Grafana unified-alerting rule provisioning — Personal AI-Powered APM System
+#
+# Requirements traceability:
+#   5.1 — When a tracked metric value enters its Red_Band, Grafana sends a
+#         notification within 60s of the evaluation that detected the crossing.
+#         Each rule below evaluates every 30s (interval) with a 0s `for`, so a
+#         Red_Band crossing fires on the first evaluation that observes it —
+#         well inside the 60s budget.
+#   5.3 — Every rule attaches the notification fields the contact point renders:
+#         the metric name (`metric` label), the observed value
+#         (`observed_value` annotation), the Red_Band threshold that was crossed
+#         (`red_threshold` annotation), and the crossing timestamp (Grafana's
+#         alert `StartsAt`, rendered by the contact point).
+#   5.5 — The `band: red` label routes these to the notification policy that caps
+#         re-notification (repeat_interval) per Requirement 5.5.
+#
+# The Red_Band thresholds mirror thresholds.ts (task 3.1). They are expressed as
+# threshold conditions on Prometheus queries against the target-app metrics:
+#   http_request_duration_seconds  (histogram)  -> p95 latency
+#   http_requests_total            (counter)    -> request rate (for error rate)
+#   http_request_errors_total      (counter)    -> error rate
+#
+# Zero-cost note (Requirement 13): all evaluation runs inside self-hosted
+# Grafana OSS against self-hosted Prometheus. No paid data source or evaluator.
+
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: apm-red-band
+    folder: APM Alerts
+    # Evaluate every 30 seconds so a Red_Band crossing notifies within 60s (5.1).
+    interval: 30s
+    rules:
+      # ---- p95 request latency entered its Red_Band ----
+      - uid: apm-red-p95-latency
+        title: p95 latency Red_Band
+        condition: C
+        # Fire on the first evaluation that sees the crossing (no pending period)
+        # to stay within the 60s notify budget (Requirement 5.1).
+        for: 0s
+        labels:
+          band: red
+          metric: p95_latency_seconds
+        annotations:
+          summary: "p95 latency entered its Red_Band"
+          # Notification content (Requirement 5.3).
+          metric: p95_latency_seconds
+          observed_value: "{{ $values.A.Value }}"
+          red_threshold: "1"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="target-app"}[$__rate_interval])) by (le))
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              # Red_Band starts at 1s p95 latency (mirrors thresholds.ts).
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [1]
+
+      # ---- Error rate entered its Red_Band ----
+      - uid: apm-red-error-rate
+        title: error rate Red_Band
+        condition: C
+        for: 0s
+        labels:
+          band: red
+          metric: error_rate
+        annotations:
+          summary: "Error rate entered its Red_Band"
+          metric: error_rate
+          observed_value: "{{ $values.A.Value }}"
+          red_threshold: "0.05"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: sum(rate(http_request_errors_total{job="target-app"}[$__rate_interval])) / clamp_min(sum(rate(http_requests_total{job="target-app"}[$__rate_interval])), 1)
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              # Red_Band starts at a 5% error rate (mirrors thresholds.ts).
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0.05]

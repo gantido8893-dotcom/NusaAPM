@@ -1,0 +1,60 @@
+# Grafana unified-alerting contact point provisioning — Personal AI-Powered APM System
+#
+# Requirements traceability:
+#   5.1 — When a metric enters its Red_Band, Grafana sends a notification to a
+#         configured free webhook endpoint (the receiver defined here).
+#   5.2 — Grafana routes threshold notifications to at least one of a Discord,
+#         Telegram, or email webhook endpoint. This contact point uses Grafana's
+#         generic `webhook` integration, which targets any of those free
+#         endpoints (e.g. a Discord/Telegram incoming-webhook URL) at $0/month.
+#   5.3 — The notification includes the metric name, the observed value, the
+#         Red_Band threshold that was crossed, and the timestamp of the crossing
+#         (assembled in the annotations/labels of the alert rule and rendered by
+#         the templated `message` below).
+#   5.4 — If the webhook is unreachable or returns a failure, delivery is retried
+#         up to 3 times at intervals of no less than 30 seconds (see settings).
+#
+# Zero-cost note (AGENTS.md hard constraint / Requirement 13): the webhook URL is
+# supplied via the ${APM_ALERT_WEBHOOK_URL} environment variable and points at a
+# free Discord/Telegram/email-relay incoming webhook. No paid notification
+# service (PagerDuty, OpsGenie, etc.) is used. If the URL is unset, provisioning
+# still loads and the contact point simply has nowhere to deliver — it never
+# incurs cost.
+
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: apm-free-webhook
+    receivers:
+      - uid: apm-free-webhook
+        type: webhook
+        settings:
+          # Free webhook endpoint — a Discord or Telegram incoming webhook, or a
+          # free email-to-webhook relay. Provided by env var so no secret is
+          # committed and the target stays $0/month (Requirement 5.2).
+          url: ${APM_ALERT_WEBHOOK_URL}
+          httpMethod: POST
+          # No cap on alerts bundled per delivery.
+          maxAlerts: 0
+          # --- Webhook delivery retry policy (Requirement 5.4) ---
+          # At most 3 delivery attempts, spaced no less than 30 seconds apart,
+          # before a delivery-failure is recorded. These keys are read by the
+          # provisioning snapshot test (task 3.7) and consumed by the webhook
+          # sender's retry loop.
+          maxRetries: 3
+          retryIntervalSeconds: 30
+          # Custom body so the payload carries the required notification fields
+          # (Requirement 5.3): metric name, observed value, red threshold crossed,
+          # and the crossing timestamp — all sourced from the rule's labels and
+          # annotations.
+          message: |
+            {{ range .Alerts }}
+            [{{ .Status }}] {{ .Labels.metric }} entered its Red_Band
+            metric: {{ .Labels.metric }}
+            observed_value: {{ .Annotations.observed_value }}
+            red_threshold_crossed: {{ .Annotations.red_threshold }}
+            timestamp: {{ .StartsAt }}
+            {{ end }}
+        # Emit a resolved notification when the metric leaves the Red_Band.
+        disableResolveMessage: false
