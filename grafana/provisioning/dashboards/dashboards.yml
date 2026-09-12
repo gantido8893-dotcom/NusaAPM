@@ -1,0 +1,36 @@
+# Grafana dashboard provisioning provider — Personal AI-Powered APM System
+#
+# Requirements traceability:
+#   4.1 — Grafana displays a latency dashboard, an error-rate dashboard, and a
+#         CPU-and-memory dashboard, each populated from the Metrics_Store. This
+#         provider auto-loads those three dashboard JSON files on startup so no
+#         manual import is needed.
+#
+# This file is auto-loaded by Grafana from
+# /etc/grafana/provisioning/dashboards/ (mounted from grafana/provisioning/ in
+# docker-compose.yml). The `path` below points at the same directory, so the
+# three sibling *.json dashboards are discovered and kept in sync with disk.
+#
+# Self-hosted Grafana OSS is $0/month (AGENTS.md hard constraint) — no paid tier.
+
+apiVersion: 1
+
+providers:
+  - name: apm-dashboards
+    # No org/folder isolation — single-user scope (Requirement 14.1).
+    orgId: 1
+    folder: "APM"
+    folderUid: apm
+    type: file
+    # Let provisioning own these dashboards; edits in the UI are not persisted
+    # back over the JSON on disk.
+    disableDeletion: false
+    editable: true
+    # How often Grafana rescans the folder for changed dashboard files (seconds).
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      # Directory (inside the container) that holds the dashboard JSON files.
+      path: /etc/grafana/provisioning/dashboards
+      # Keep the file/folder structure on disk as the source of truth.
+      foldersFromFilesStructure: false

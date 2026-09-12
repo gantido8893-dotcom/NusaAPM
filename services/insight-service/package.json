@@ -1,0 +1,31 @@
+{
+  "name": "insight-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Insight Service for the Personal AI-Powered APM System: queries Prometheus, performs empirical complexity fitting and runway forecasting, runs the two-tier AI analysis, and exposes a single-user JSON API.",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/index.js",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.30",
+    "fast-check": "^3.17.0",
+    "js-yaml": "^5.4.1",
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.0"
+  }
+}

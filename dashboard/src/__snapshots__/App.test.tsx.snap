@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`App scaffold > matches snapshot 1`] = `
+<div>
+  <main>
+    <h1>
+      Personal AI-Powered APM
+    </h1>
+    <p>
+      Simple View — dashboard scaffold ready.
+    </p>
+  </main>
+</div>
+`;

@@ -1,0 +1,35 @@
+# Grafana datasource provisioning — Personal AI-Powered APM System
+#
+# Requirements traceability:
+#   4.1 — Grafana displays latency, error-rate, and CPU-and-memory dashboards,
+#         each populated from the Metrics_Store (Prometheus). Those dashboards
+#         resolve their queries through the datasource provisioned here.
+#
+# This file is auto-loaded by Grafana on startup from
+# /etc/grafana/provisioning/datasources/ (mounted from grafana/provisioning/
+# in docker-compose.yml). It registers self-hosted Prometheus as the default
+# datasource so provisioned dashboards need no manual wiring.
+#
+# The URL uses the Docker Compose service name `prometheus` on its default
+# port 9090, matching the scrape targets in prometheus/prometheus.yml, so DNS
+# resolves inside the compose network. Self-hosted Grafana OSS + Prometheus are
+# $0/month (AGENTS.md hard constraint) — no paid tier is involved.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    # Stable UID so dashboards can reference this datasource by a fixed id.
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    # Docker Compose service name + default Prometheus port.
+    url: http://prometheus:9090
+    # Register as the default datasource for all panels/dashboards.
+    isDefault: true
+    # Let provisioning manage this datasource; the user can't delete it from the UI.
+    editable: false
+    jsonData:
+      httpMethod: POST
+      # Align Grafana's scrape-interval hint with prometheus.yml global (15s).
+      timeInterval: 15s
