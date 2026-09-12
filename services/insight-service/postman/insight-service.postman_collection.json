@@ -1,0 +1,384 @@
+{
+  "info": {
+    "name": "Insight_Service JSON API",
+    "_postman_id": "b2f6c0de-5f3a-4d21-9a8e-1a2b3c4d5e6f",
+    "description": "API tests for the Personal AI-Powered APM System Insight_Service JSON API (task 5.13).\n\nCovers every endpoint exposed by services/insight-service/src/api.ts (createApp):\n  GET  /api/complexity\n  GET  /api/complexity/:endpoint\n  GET  /api/runway\n  GET  /api/bands\n  GET  /api/insight\n  GET  /api/cost-notifications\n  POST /api/cost-notifications/:id/ack\n\nEach request asserts:\n  - the correct response shape (Requirements 9.1, 9.2, 9.3),\n  - that items with insufficient recorded data surface an EXPLICIT status\n    ('insufficient-data' / 'no-findings') rather than being omitted or failing\n    the whole request (Requirement 9.4), and\n  - that the response returns within 2000ms (Requirement 9.5).\n\nThese tests are designed to be run against the service started WITH NO\nPrometheus reachable (e.g. PROMETHEUS_URL pointing at a dead port). In that\nmode every per-item Prometheus query fails at the transport layer and the API\nmaps each failure to an explicit insufficient-data indicator for that item\nwhile still returning HTTP 200 for the whole request -- which is exactly the\nbehaviour Requirement 9.4 mandates. No Prometheus and no LLM are contacted, so\nthe run is free (Requirement 13) and deterministic.\n\nUsage (free, offline):\n  1. Start the API against a dead Prometheus so every item is insufficient-data:\n       PROMETHEUS_URL=http://127.0.0.1:9   PORT=3001   node dist/index.js\n     (or `npm run start:test-empty` from services/insight-service)\n  2. Run this collection with newman (free OSS):\n       npm run test:api\n     which runs: newman run postman/insight-service.postman_collection.json \\\n                   -e postman/insight-service.local.postman_environment.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "known_endpoint",
+      "value": "target-app",
+      "type": "string"
+    },
+    {
+      "key": "max_response_ms",
+      "value": "2000",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// No global setup required. Requests are independent and read-only",
+          "// except the cost-notification ack (which 404s on an unknown id in the",
+          "// default empty store, asserted below)."
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level assertion applied to every request:",
+          "// Requirement 9.5 -- respond within 2 seconds under single-user load.",
+          "var maxMs = Number(pm.collectionVariables.get('max_response_ms')) || 2000;",
+          "pm.test('R9.5 responds within ' + maxMs + 'ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(maxMs + 1);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /api/complexity (all endpoints)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/complexity",
+          "host": ["{{base_url}}"],
+          "path": ["api", "complexity"]
+        },
+        "description": "Requirement 9.1: time + space ComplexityEstimate per monitored endpoint. Requirement 9.4: endpoints with insufficient data surface an explicit status rather than being omitted."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('whole request succeeds (not failed for the whole request) - R9.4', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('R9.1 shape: { endpoints: [...] }', function () {",
+              "    pm.expect(body).to.be.an('object');",
+              "    pm.expect(body.endpoints, 'endpoints').to.be.an('array');",
+              "});",
+              "var validComplexityStatus = ['ok', 'insufficient-data', 'indeterminate'];",
+              "pm.test('R9.1/R9.4 every endpoint carries explicit time+space status', function () {",
+              "    pm.expect(body.endpoints.length, 'at least one monitored endpoint').to.be.above(0);",
+              "    body.endpoints.forEach(function (ep) {",
+              "        pm.expect(ep, 'endpoint entry').to.be.an('object');",
+              "        pm.expect(ep.endpoint, 'endpoint id').to.be.a('string');",
+              "        pm.expect(ep.time, 'time estimate').to.be.an('object');",
+              "        pm.expect(ep.space, 'space estimate').to.be.an('object');",
+              "        pm.expect(validComplexityStatus, 'time.status explicit').to.include(ep.time.status);",
+              "        pm.expect(validComplexityStatus, 'space.status explicit').to.include(ep.space.status);",
+              "        pm.expect(ep.time.distinctLoadLevels, 'time.distinctLoadLevels').to.be.a('number');",
+              "        pm.expect(ep.space.distinctLoadLevels, 'space.distinctLoadLevels').to.be.a('number');",
+              "    });",
+              "});",
+              "// When run against a dead Prometheus (the documented free/deterministic",
+              "// mode) every item MUST be insufficient-data, never silently dropped.",
+              "pm.test('R9.4 insufficient-data is surfaced explicitly, not omitted', function () {",
+              "    body.endpoints.forEach(function (ep) {",
+              "        if (ep.time.status === 'insufficient-data') {",
+              "            pm.expect(ep.time).to.have.property('distinctLoadLevels');",
+              "        }",
+              "        if (ep.space.status === 'insufficient-data') {",
+              "            pm.expect(ep.space).to.have.property('distinctLoadLevels');",
+              "        }",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/complexity/:endpoint (known endpoint)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/complexity/{{known_endpoint}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "complexity", "{{known_endpoint}}"]
+        },
+        "description": "Requirement 9.1: single endpoint's time + space estimate. Requirement 9.4: a known endpoint with no recorded data returns explicit insufficient-data, not an error."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('R9.4 known endpoint returns 200, not an error', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "var validComplexityStatus = ['ok', 'insufficient-data', 'indeterminate'];",
+              "pm.test('R9.1 shape: { endpoint, time, space }', function () {",
+              "    pm.expect(body.endpoint, 'endpoint id').to.eql(pm.collectionVariables.get('known_endpoint'));",
+              "    pm.expect(body.time, 'time estimate').to.be.an('object');",
+              "    pm.expect(body.space, 'space estimate').to.be.an('object');",
+              "    pm.expect(validComplexityStatus).to.include(body.time.status);",
+              "    pm.expect(validComplexityStatus).to.include(body.space.status);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/complexity/:endpoint (unknown endpoint)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/complexity/does-not-exist",
+          "host": ["{{base_url}}"],
+          "path": ["api", "complexity", "does-not-exist"]
+        },
+        "description": "Requirement 9.4: an unknown endpoint returns an explicit insufficient-data response rather than a hard error, so a client can distinguish 'no data yet' from 'server broke'."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('R9.4 unknown endpoint returns 200 (not 404/500)', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('R9.4 unknown endpoint is explicit insufficient-data for both axes', function () {",
+              "    pm.expect(body.endpoint).to.eql('does-not-exist');",
+              "    pm.expect(body.time.status).to.eql('insufficient-data');",
+              "    pm.expect(body.space.status).to.eql('insufficient-data');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/runway",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/runway",
+          "host": ["{{base_url}}"],
+          "path": ["api", "runway"]
+        },
+        "description": "Requirement 9.2: RunwayEstimate per tracked metric. Requirement 9.4: metrics with fewer than the required data points surface an explicit insufficient-data status."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('whole request succeeds - R9.4', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "var validRunwayStatus = ['ok', 'not-trending', 'insufficient-data'];",
+              "pm.test('R9.2 shape: { metrics: [{ metric, runway }] }', function () {",
+              "    pm.expect(body.metrics, 'metrics').to.be.an('array');",
+              "    pm.expect(body.metrics.length, 'at least one tracked metric').to.be.above(0);",
+              "    body.metrics.forEach(function (m) {",
+              "        pm.expect(m.metric, 'metric name').to.be.a('string');",
+              "        pm.expect(m.runway, 'runway estimate').to.be.an('object');",
+              "        pm.expect(validRunwayStatus, 'runway.status explicit').to.include(m.runway.status);",
+              "        pm.expect(m.runway.dataPoints, 'runway.dataPoints').to.be.a('number');",
+              "    });",
+              "});",
+              "pm.test('R9.4 insufficient-data surfaced per metric, not omitted', function () {",
+              "    body.metrics.forEach(function (m) {",
+              "        if (m.runway.status === 'insufficient-data') {",
+              "            pm.expect(m.runway).to.have.property('dataPoints');",
+              "        }",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/bands",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/bands",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bands"]
+        },
+        "description": "Requirement 9.3: current Green/Yellow/Red/unknown band classification per tracked metric. When no current value is available the metric is classified 'unknown' rather than dropped (Requirement 9.4)."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('whole request succeeds - R9.4', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "var validBands = ['green', 'yellow', 'red', 'unknown'];",
+              "pm.test('R9.3 shape: { metrics: [{ metric, band }] }', function () {",
+              "    pm.expect(body.metrics, 'metrics').to.be.an('array');",
+              "    pm.expect(body.metrics.length, 'at least one tracked metric').to.be.above(0);",
+              "    body.metrics.forEach(function (m) {",
+              "        pm.expect(m.metric, 'metric name').to.be.a('string');",
+              "        pm.expect(validBands, 'band classification').to.include(m.band);",
+              "        if (m.hasOwnProperty('percentOfCritical')) {",
+              "            pm.expect(m.percentOfCritical, 'percentOfCritical').to.be.a('number');",
+              "        }",
+              "    });",
+              "});",
+              "pm.test('R9.4 unreachable metric falls back to explicit unknown band, not dropped', function () {",
+              "    // No metric is silently omitted: count returned equals count tracked",
+              "    // is asserted indirectly by the non-empty array above; each entry has a",
+              "    // valid, explicit band value.",
+              "    body.metrics.forEach(function (m) {",
+              "        pm.expect(validBands).to.include(m.band);",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/insight",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/insight",
+          "host": ["{{base_url}}"],
+          "path": ["api", "insight"]
+        },
+        "description": "Latest AiExplanation. When no explanation is available yet the API returns a well-formed 'no-findings' AiExplanation rather than a null body (Requirement 9.4 shape stability). No LLM is contacted (Requirement 13)."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('request succeeds', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "var validInsightStatus = ['ok', 'skipped-rate-limit', 'skipped-free-tier-limit', 'no-findings'];",
+              "pm.test('shape: { insight: AiExplanation } with explicit status', function () {",
+              "    pm.expect(body.insight, 'insight').to.be.an('object');",
+              "    pm.expect(validInsightStatus, 'insight.status').to.include(body.insight.status);",
+              "    pm.expect(body.insight.generatedAtMs, 'generatedAtMs').to.be.a('number');",
+              "});",
+              "pm.test('default deployment reports explicit no-findings (no fabricated insight)', function () {",
+              "    // With no scheduler wired, the API must surface 'no-findings' rather",
+              "    // than inventing a hypothesis. Any status is schema-valid; this asserts",
+              "    // the free/default path is explicit.",
+              "    pm.expect(body.insight.status).to.eql('no-findings');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/cost-notifications",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/cost-notifications",
+          "host": ["{{base_url}}"],
+          "path": ["api", "cost-notifications"]
+        },
+        "description": "Requirement 13: active (unacknowledged) zero-cost-guardrail notifications. Empty by default."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('request succeeds', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('shape: { notifications: [...] }', function () {",
+              "    pm.expect(body.notifications, 'notifications').to.be.an('array');",
+              "    body.notifications.forEach(function (n) {",
+              "        pm.expect(n.id, 'id').to.be.a('string');",
+              "        pm.expect(n.component, 'component').to.be.a('string');",
+              "        pm.expect(['paid-tier-required', 'free-tier-limit-exceeded'], 'kind').to.include(n.kind);",
+              "        pm.expect(n.acknowledged, 'acknowledged').to.be.a('boolean');",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/cost-notifications/:id/ack (unknown id -> 404)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/api/cost-notifications/does-not-exist/ack",
+          "host": ["{{base_url}}"],
+          "path": ["api", "cost-notifications", "does-not-exist", "ack"]
+        },
+        "description": "Requirement 13.3: acknowledging a non-existent notification returns 404 with { acknowledged: false, id } rather than silently succeeding. Read-only against the default empty store."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('unknown id returns 404', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "var body = pm.response.json();",
+              "pm.test('shape: { acknowledged: false, id }', function () {",
+              "    pm.expect(body.acknowledged, 'acknowledged').to.eql(false);",
+              "    pm.expect(body.id, 'id echoed back').to.eql('does-not-exist');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

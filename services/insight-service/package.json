@@ -14,7 +14,10 @@
     "start": "node dist/index.js",
     "dev": "tsc -p tsconfig.json --watch",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:api": "vitest run api.postman",
+    "start:test-empty": "node scripts/start-test-empty.mjs",
+    "test:api:newman": "newman run postman/insight-service.postman_collection.json -e postman/insight-service.local.postman_environment.json"
   },
   "dependencies": {
     "express": "^4.19.2"
