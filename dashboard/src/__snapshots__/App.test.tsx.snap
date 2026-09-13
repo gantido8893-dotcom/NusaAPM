@@ -1,14 +1,362 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`App scaffold > matches snapshot 1`] = `
+exports[`App (Simple View integration) > matches the loaded-view snapshot 1`] = `
 <div>
-  <main>
-    <h1>
-      Personal AI-Powered APM
-    </h1>
-    <p>
-      Simple View — dashboard scaffold ready.
-    </p>
+  <main
+    class="app"
+  >
+    <header
+      class="app__header"
+    >
+      <h1>
+        Personal AI-Powered APM
+      </h1>
+      <p
+        class="app__subtitle"
+      >
+        Simple View
+      </p>
+    </header>
+    <aside
+      aria-label="Zero-cost guardrail notifications"
+      class="cost-banner"
+      role="alert"
+    >
+      <h2
+        class="cost-banner__heading"
+      >
+        Cost guardrail
+      </h2>
+      <ul
+        class="cost-banner__list"
+      >
+        <li
+          class="cost-banner__item"
+        >
+          <div
+            class="cost-banner__text"
+          >
+            <strong
+              class="cost-banner__kind"
+            >
+              Free-tier limit exceeded
+            </strong>
+             
+            <span
+              class="cost-banner__component"
+            >
+              Grafana Cloud
+            </span>
+            <p
+              class="cost-banner__detail"
+            >
+              Metric-series count would exceed the documented free-tier allowance.
+            </p>
+          </div>
+          <button
+            class="cost-banner__ack"
+            type="button"
+          >
+            Acknowledge
+          </button>
+        </li>
+      </ul>
+    </aside>
+    <section
+      aria-label="Health"
+      class="app__section app__section--bands"
+    >
+      <h2>
+        Health
+      </h2>
+      <div
+        class="health-band-strip"
+      >
+        <section
+          aria-labelledby="health-band-http_request_p95_ms-name"
+          class="health-band health-band--yellow"
+          data-band="yellow"
+        >
+          <h3
+            class="health-band__metric"
+            id="health-band-http_request_p95_ms-name"
+          >
+            http_request_p95_ms
+          </h3>
+          <p
+            aria-label="http_request_p95_ms is Warning, current value 68"
+            class="health-band__status"
+            role="status"
+          >
+            <span
+              class="health-band__badge health-band__badge--yellow"
+              data-testid="health-band-badge"
+            >
+              Warning
+            </span>
+            <span
+              class="health-band__value"
+              data-testid="health-band-value"
+            >
+              68
+            </span>
+          </p>
+          <p
+            class="health-band__percent"
+            data-testid="health-band-percent"
+          >
+            68
+            % of critical
+          </p>
+          <p
+            class="health-band__runway"
+            data-testid="health-band-runway"
+          >
+            <span
+              class="health-band__runway-label"
+            >
+              Time to critical:
+            </span>
+             
+            about 3 days
+          </p>
+        </section>
+        <section
+          aria-labelledby="health-band-process_resident_memory_bytes-name"
+          class="health-band health-band--green"
+          data-band="green"
+        >
+          <h3
+            class="health-band__metric"
+            id="health-band-process_resident_memory_bytes-name"
+          >
+            process_resident_memory_bytes
+          </h3>
+          <p
+            aria-label="process_resident_memory_bytes is Healthy, current value 22"
+            class="health-band__status"
+            role="status"
+          >
+            <span
+              class="health-band__badge health-band__badge--green"
+              data-testid="health-band-badge"
+            >
+              Healthy
+            </span>
+            <span
+              class="health-band__value"
+              data-testid="health-band-value"
+            >
+              22
+            </span>
+          </p>
+          <p
+            class="health-band__percent"
+            data-testid="health-band-percent"
+          >
+            22
+            % of critical
+          </p>
+        </section>
+      </div>
+    </section>
+    <section
+      aria-label="Complexity"
+      class="app__section app__section--complexity"
+    >
+      <h2>
+        Complexity
+      </h2>
+      <div
+        class="complexity-grid"
+      >
+        <article
+          aria-labelledby="complexity-card-get-/orders"
+          class="complexity-card"
+        >
+          <h3
+            class="complexity-card__endpoint"
+            id="complexity-card-get-/orders"
+          >
+            GET /orders
+          </h3>
+          <section
+            aria-labelledby="complexity-time-heading"
+            class="complexity-dimension complexity-dimension--ok"
+          >
+            <h4
+              class="complexity-dimension__label"
+              id="complexity-time-heading"
+            >
+              Time
+            </h4>
+            <dl
+              class="complexity-dimension__fit"
+            >
+              <div>
+                <dt>
+                  Complexity
+                </dt>
+                <dd
+                  class="complexity-dimension__class"
+                >
+                  O(n) — linear
+                </dd>
+              </div>
+              <div>
+                <dt>
+                  In plain language
+                </dt>
+                <dd
+                  class="complexity-dimension__plain"
+                >
+                  scales roughly linearly with load
+                </dd>
+              </div>
+              <div>
+                <dt>
+                  Fit quality (R²)
+                </dt>
+                <dd
+                  class="complexity-dimension__r2"
+                >
+                  0.94
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <section
+            aria-labelledby="complexity-space-heading"
+            class="complexity-dimension complexity-dimension--insufficient-data"
+          >
+            <h4
+              class="complexity-dimension__label"
+              id="complexity-space-heading"
+            >
+              Space
+            </h4>
+            <p
+              class="complexity-dimension__state"
+              role="status"
+            >
+              Not enough data yet. Recorded 
+              2
+               distinct load 
+              levels
+              ; need at least 
+              5
+               before a complexity estimate can be fitted.
+            </p>
+          </section>
+        </article>
+      </div>
+    </section>
+    <section
+      aria-label="AI insight"
+      class="app__section app__section--insight"
+    >
+      <h2>
+        AI Insight
+      </h2>
+      <section
+        aria-label="AI insight"
+        class="insight-panel insight-panel--ok"
+      >
+        <header
+          class="insight-panel__header"
+        >
+          <h3>
+            AI Insight
+          </h3>
+          <span
+            aria-label="This AI explanation is an unverified hypothesis"
+            class="insight-panel__badge"
+            role="note"
+            title="AI explanations are hypotheses, not verified facts"
+          >
+            Unverified hypothesis
+          </span>
+        </header>
+        <div
+          class="insight-panel__body"
+        >
+          <section
+            aria-label="AI explanation"
+            class="insight-panel__explanation"
+          >
+            <p
+              class="insight-panel__provider"
+            >
+              Generated by 
+              <span>
+                ollama
+              </span>
+            </p>
+            <div
+              class="insight-panel__hypothesis"
+            >
+              <h4>
+                Hypothesis
+              </h4>
+              <p>
+                Latency growth on GET /orders aligns with rising connection-pool saturation.
+              </p>
+            </div>
+            <div
+              class="insight-panel__suggestion"
+            >
+              <h4>
+                Suggestion
+              </h4>
+              <p>
+                Increase the connection-pool size or add a read replica.
+              </p>
+            </div>
+          </section>
+          <section
+            aria-label="Supporting metrics"
+            class="insight-panel__evidence"
+          >
+            <h4
+              class="insight-panel__evidence-heading"
+            >
+              Supporting metrics
+            </h4>
+            <div
+              class="insight-panel__evidence-group"
+            >
+              <h5>
+                Band crossings
+              </h5>
+              <ul>
+                <li
+                  class="insight-panel__evidence-item"
+                >
+                  <span
+                    class="insight-panel__metric"
+                  >
+                    http_request_p95_ms
+                  </span>
+                   crossed from 
+                  <span
+                    class="insight-panel__band"
+                  >
+                    green
+                  </span>
+                   to
+                   
+                  <span
+                    class="insight-panel__band"
+                  >
+                    yellow
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </section>
+    </section>
   </main>
 </div>
 `;

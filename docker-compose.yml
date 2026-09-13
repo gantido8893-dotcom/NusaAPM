@@ -1,0 +1,145 @@
+# Docker Compose — Personal AI-Powered APM System (full stack, local orchestration)
+#
+# One command brings up the whole stack on the user's own machine (Requirement
+# 15.1): the Metrics_Store (Prometheus), Grafana, Node Exporter, cAdvisor
+# (Requirement 15.2), the Insight_Service, and the sample Monitored_App:
+#
+#     docker compose up -d
+#
+# ZERO-COST / SINGLE-USER (AGENTS.md hard constraints):
+#   - Every image is free / open source and self-hosted — $0/month (Requirement
+#     14.1). There is no billing or payment surface anywhere (Requirement 14.3).
+#   - Grafana runs with anonymous access (no login) for the single user
+#     (Requirement 14.2). No multi-tenancy is introduced (Requirement 14.1).
+#
+# FAILED-COMPONENT REPORTING (Requirement 15.4):
+#   Docker Compose already reports the identity of any service that fails to
+#   start: `docker compose up` prints the failing service name and its exit,
+#   `docker compose ps` shows a non-running/exited state per service, and
+#   `docker compose logs <service>` surfaces the cause. The smoke test (task
+#   9.2) leans on these built-in signals; no custom supervisor is needed.
+#
+# All services share the `apm` network so they resolve each other by service
+# name (e.g. `prometheus`, `target-app:9464`) — matching the DNS names used in
+# prometheus/prometheus.yml and grafana/provisioning/datasources/prometheus.yml.
+
+services:
+  # --- Metrics_Store: self-hosted Prometheus (Requirement 15.1) ---
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: apm-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      # Retention >= 30d floor, default 90d, because the built-in 15d default is
+      # too short for trend forecasting (Requirement 1.6). Explicit override.
+      - --storage.tsdb.retention.time=90d
+      - --storage.tsdb.path=/prometheus
+      # Allow config hot-reload via POST /-/reload (see prometheus.yml note).
+      - --web.enable-lifecycle
+    volumes:
+      # Scrape config authored in task 1.6 (targets target-app:9464,
+      # node-exporter:9100, cadvisor:8080).
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # Persist the TSDB so retained history survives restarts.
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - apm
+
+  # --- Dashboards + alerting: self-hosted Grafana OSS (Requirement 15.1) ---
+  grafana:
+    image: grafana/grafana-oss:11.1.0
+    container_name: apm-grafana
+    restart: unless-stopped
+    environment:
+      # Single-user, no-login access (Requirement 14.2). Anonymous users get
+      # Admin so provisioned dashboards/alerts are fully usable without auth.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      # Datasource + dashboard + alerting provisioning authored in tasks 1.8,
+      # 1.9, 3.6. Grafana auto-loads everything under this directory on startup.
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - apm
+
+  # --- Host-level metrics: Node Exporter (Requirement 15.1) ---
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: apm-node-exporter
+    restart: unless-stopped
+    # Scraped by Prometheus at node-exporter:9100.
+    ports:
+      - "9100:9100"
+    networks:
+      - apm
+
+  # --- Per-container metrics: cAdvisor (Requirement 15.2) ---
+  # Included because the Monitored_App and the rest of the stack run in
+  # containers, so per-container CPU/memory/network is available.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: apm-cadvisor
+    restart: unless-stopped
+    # Read-only host mounts cAdvisor needs to observe container resource usage.
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    # Scraped by Prometheus at cadvisor:8080.
+    ports:
+      - "8080:8080"
+    networks:
+      - apm
+
+  # --- Sample Monitored_App exposing /metrics (Requirement 1.1) ---
+  target-app:
+    build:
+      context: ./services/target-app
+    container_name: apm-target-app
+    restart: unless-stopped
+    environment:
+      # PORT reconciliation: the app serves its routes AND /metrics on one
+      # http.Server bound to PORT. prometheus.yml scrapes target-app:9464, so
+      # the container listens on 9464 to make /metrics reachable there.
+      PORT: "9464"
+    ports:
+      - "9464:9464"
+    networks:
+      - apm
+
+  # --- Insight_Service: JSON API, complexity + forecast + AI layer ---
+  insight-service:
+    build:
+      context: ./services/insight-service
+    container_name: apm-insight-service
+    restart: unless-stopped
+    environment:
+      # Reach Prometheus by its Compose service name on the shared network.
+      PROMETHEUS_URL: "http://prometheus:9090"
+      PORT: "3001"
+    ports:
+      - "3001:3001"
+    depends_on:
+      - prometheus
+    networks:
+      - apm
+
+# Named volumes persist Prometheus TSDB and Grafana state across restarts.
+volumes:
+  prometheus-data:
+  grafana-data:
+
+# Single shared network so services resolve each other by name.
+networks:
+  apm:
+    driver: bridge

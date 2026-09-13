@@ -1,0 +1,6 @@
+# Keep the Docker build context minimal and reproducible: the image installs
+# deps from the lockfile and compiles fresh, so host build artifacts must not
+# leak in.
+node_modules
+dist
+*.log
