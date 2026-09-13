@@ -1,0 +1,219 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ComplexityCard > matches snapshot for an ok time + ok space card 1`] = `
+<div>
+  <article
+    aria-labelledby="complexity-card-get-/orders"
+    class="complexity-card"
+  >
+    <h3
+      class="complexity-card__endpoint"
+      id="complexity-card-get-/orders"
+    >
+      GET /orders
+    </h3>
+    <section
+      aria-labelledby="complexity-time-heading"
+      class="complexity-dimension complexity-dimension--ok"
+    >
+      <h4
+        class="complexity-dimension__label"
+        id="complexity-time-heading"
+      >
+        Time
+      </h4>
+      <dl
+        class="complexity-dimension__fit"
+      >
+        <div>
+          <dt>
+            Complexity
+          </dt>
+          <dd
+            class="complexity-dimension__class"
+          >
+            O(n) — linear
+          </dd>
+        </div>
+        <div>
+          <dt>
+            In plain language
+          </dt>
+          <dd
+            class="complexity-dimension__plain"
+          >
+            Latency scales roughly linearly with load.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            Fit quality (R²)
+          </dt>
+          <dd
+            class="complexity-dimension__r2"
+          >
+            0.94
+          </dd>
+        </div>
+      </dl>
+    </section>
+    <section
+      aria-labelledby="complexity-space-heading"
+      class="complexity-dimension complexity-dimension--ok"
+    >
+      <h4
+        class="complexity-dimension__label"
+        id="complexity-space-heading"
+      >
+        Space
+      </h4>
+      <dl
+        class="complexity-dimension__fit"
+      >
+        <div>
+          <dt>
+            Complexity
+          </dt>
+          <dd
+            class="complexity-dimension__class"
+          >
+            O(log n) — logarithmic
+          </dd>
+        </div>
+        <div>
+          <dt>
+            In plain language
+          </dt>
+          <dd
+            class="complexity-dimension__plain"
+          >
+            Memory grows slowly (logarithmically) as data volume rises.
+          </dd>
+        </div>
+        <div>
+          <dt>
+            Fit quality (R²)
+          </dt>
+          <dd
+            class="complexity-dimension__r2"
+          >
+            0.88
+          </dd>
+        </div>
+      </dl>
+    </section>
+  </article>
+</div>
+`;
+
+exports[`ComplexityCard > matches snapshot for the indeterminate state 1`] = `
+<div>
+  <article
+    aria-labelledby="complexity-card-post-/search"
+    class="complexity-card"
+  >
+    <h3
+      class="complexity-card__endpoint"
+      id="complexity-card-post-/search"
+    >
+      POST /search
+    </h3>
+    <section
+      aria-labelledby="complexity-time-heading"
+      class="complexity-dimension complexity-dimension--indeterminate"
+    >
+      <h4
+        class="complexity-dimension__label"
+        id="complexity-time-heading"
+      >
+        Time
+      </h4>
+      <p
+        class="complexity-dimension__state"
+        role="status"
+      >
+        No clear fit. The measurements do not match any known complexity curve well enough to report one.
+      </p>
+    </section>
+    <section
+      aria-labelledby="complexity-space-heading"
+      class="complexity-dimension complexity-dimension--indeterminate"
+    >
+      <h4
+        class="complexity-dimension__label"
+        id="complexity-space-heading"
+      >
+        Space
+      </h4>
+      <p
+        class="complexity-dimension__state"
+        role="status"
+      >
+        No clear fit. The measurements do not match any known complexity curve well enough to report one.
+      </p>
+    </section>
+  </article>
+</div>
+`;
+
+exports[`ComplexityCard > matches snapshot for the insufficient-data state 1`] = `
+<div>
+  <article
+    aria-labelledby="complexity-card-get-/reports"
+    class="complexity-card"
+  >
+    <h3
+      class="complexity-card__endpoint"
+      id="complexity-card-get-/reports"
+    >
+      GET /reports
+    </h3>
+    <section
+      aria-labelledby="complexity-time-heading"
+      class="complexity-dimension complexity-dimension--insufficient-data"
+    >
+      <h4
+        class="complexity-dimension__label"
+        id="complexity-time-heading"
+      >
+        Time
+      </h4>
+      <p
+        class="complexity-dimension__state"
+        role="status"
+      >
+        Not enough data yet. Recorded 
+        3
+         distinct load 
+        levels
+        ; need at least 
+        5
+         before a complexity estimate can be fitted.
+      </p>
+    </section>
+    <section
+      aria-labelledby="complexity-space-heading"
+      class="complexity-dimension complexity-dimension--insufficient-data"
+    >
+      <h4
+        class="complexity-dimension__label"
+        id="complexity-space-heading"
+      >
+        Space
+      </h4>
+      <p
+        class="complexity-dimension__state"
+        role="status"
+      >
+        Not enough data yet. Recorded 
+        3
+         distinct load 
+        levels
+        ; need at least 
+        5
+         before a complexity estimate can be fitted.
+      </p>
+    </section>
+  </article>
+</div>
+`;

@@ -1,0 +1,223 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`HealthBand > matches snapshot for the green (Healthy) band 1`] = `
+<div>
+  <section
+    aria-labelledby="health-band-http_request_p95_ms-name"
+    class="health-band health-band--green"
+    data-band="green"
+  >
+    <h3
+      class="health-band__metric"
+      id="health-band-http_request_p95_ms-name"
+    >
+      http_request_p95_ms
+    </h3>
+    <p
+      aria-label="http_request_p95_ms is Healthy, current value 42"
+      class="health-band__status"
+      role="status"
+    >
+      <span
+        class="health-band__badge health-band__badge--green"
+        data-testid="health-band-badge"
+      >
+        Healthy
+      </span>
+      <span
+        class="health-band__value"
+        data-testid="health-band-value"
+      >
+        42
+      </span>
+    </p>
+    <p
+      class="health-band__percent"
+      data-testid="health-band-percent"
+    >
+      21
+      % of critical
+    </p>
+  </section>
+</div>
+`;
+
+exports[`HealthBand > matches snapshot for the red (Critical) band 1`] = `
+<div>
+  <section
+    aria-labelledby="health-band-http_request_p95_ms-name"
+    class="health-band health-band--red"
+    data-band="red"
+  >
+    <h3
+      class="health-band__metric"
+      id="health-band-http_request_p95_ms-name"
+    >
+      http_request_p95_ms
+    </h3>
+    <p
+      aria-label="http_request_p95_ms is Critical, current value 520"
+      class="health-band__status"
+      role="status"
+    >
+      <span
+        class="health-band__badge health-band__badge--red"
+        data-testid="health-band-badge"
+      >
+        Critical
+      </span>
+      <span
+        class="health-band__value"
+        data-testid="health-band-value"
+      >
+        520
+      </span>
+    </p>
+    <p
+      class="health-band__percent"
+      data-testid="health-band-percent"
+    >
+      104
+      % of critical
+    </p>
+  </section>
+</div>
+`;
+
+exports[`HealthBand > matches snapshot for the unknown band with the missing/invalid indicator 1`] = `
+<div>
+  <section
+    aria-labelledby="health-band-http_request_p95_ms-name"
+    class="health-band health-band--unknown"
+    data-band="unknown"
+  >
+    <h3
+      class="health-band__metric"
+      id="health-band-http_request_p95_ms-name"
+    >
+      http_request_p95_ms
+    </h3>
+    <p
+      aria-label="http_request_p95_ms is Unknown, current value 99"
+      class="health-band__status"
+      role="status"
+    >
+      <span
+        class="health-band__badge health-band__badge--unknown"
+        data-testid="health-band-badge"
+      >
+        Unknown
+      </span>
+      <span
+        class="health-band__value"
+        data-testid="health-band-value"
+      >
+        99
+      </span>
+    </p>
+    <p
+      class="health-band__warning"
+      data-testid="health-band-threshold-missing"
+      role="alert"
+    >
+      Threshold missing/invalid
+    </p>
+  </section>
+</div>
+`;
+
+exports[`HealthBand > matches snapshot for the yellow (Warning) band 1`] = `
+<div>
+  <section
+    aria-labelledby="health-band-http_request_p95_ms-name"
+    class="health-band health-band--yellow"
+    data-band="yellow"
+  >
+    <h3
+      class="health-band__metric"
+      id="health-band-http_request_p95_ms-name"
+    >
+      http_request_p95_ms
+    </h3>
+    <p
+      aria-label="http_request_p95_ms is Warning, current value 180"
+      class="health-band__status"
+      role="status"
+    >
+      <span
+        class="health-band__badge health-band__badge--yellow"
+        data-testid="health-band-badge"
+      >
+        Warning
+      </span>
+      <span
+        class="health-band__value"
+        data-testid="health-band-value"
+      >
+        180
+      </span>
+    </p>
+    <p
+      class="health-band__percent"
+      data-testid="health-band-percent"
+    >
+      72
+      % of critical
+    </p>
+  </section>
+</div>
+`;
+
+exports[`HealthBand > matches snapshot when a runway-to-critical summary is present 1`] = `
+<div>
+  <section
+    aria-labelledby="health-band-process_resident_memory_bytes-name"
+    class="health-band health-band--yellow"
+    data-band="yellow"
+  >
+    <h3
+      class="health-band__metric"
+      id="health-band-process_resident_memory_bytes-name"
+    >
+      process_resident_memory_bytes
+    </h3>
+    <p
+      aria-label="process_resident_memory_bytes is Warning, current value 640"
+      class="health-band__status"
+      role="status"
+    >
+      <span
+        class="health-band__badge health-band__badge--yellow"
+        data-testid="health-band-badge"
+      >
+        Warning
+      </span>
+      <span
+        class="health-band__value"
+        data-testid="health-band-value"
+      >
+        640
+      </span>
+    </p>
+    <p
+      class="health-band__percent"
+      data-testid="health-band-percent"
+    >
+      80
+      % of critical
+    </p>
+    <p
+      class="health-band__runway"
+      data-testid="health-band-runway"
+    >
+      <span
+        class="health-band__runway-label"
+      >
+        Time to critical:
+      </span>
+       
+      about 3 days
+    </p>
+  </section>
+</div>
+`;
